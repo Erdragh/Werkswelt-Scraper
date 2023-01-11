@@ -1,4 +1,20 @@
 import { CDATA, ChildNode } from "domhandler";
+
+const ingredientMap: Map<string, string> = new Map();
+ingredientMap.set("S", "pork");
+ingredientMap.set("V", "veggie");
+ingredientMap.set("R", "beef");
+ingredientMap.set("veg", "vegan");
+ingredientMap.set("G", "poultry");
+//TODO: Add additional icons whenever they are used on the page,
+//      as for some reason unknown even to god almighty, the images
+//      in the list of dishes and the images on the legend on the
+//      bottom have differen sources and different alt-texts.
+//      Also: Why the fuck would you not give the icons appropriate
+//      alt-texts? No matter what they are, they all have the alt-text
+//      "food-icon", so anyone who relies on accessibilty features is
+//      utterly fucked.
+
 export default function parseFoodNodes({
   type,
   relevantNodes,
@@ -29,6 +45,15 @@ export default function parseFoodNodes({
     if (node.type === "text") {
       let parsedPrices = extractPrices(node.data);
       if (parsedPrices) prices = parsedPrices;
+    } else if (node.type === "tag") {
+      switch (node.name) {
+        case "img":
+          const srcMatch = node.attribs.src.match(/\/\w+?\.png/g);
+          if (!srcMatch) break;
+          const ingredient = ingredientMap.get(srcMatch[0].replace(".png", "").replace("/", ""));
+          if (ingredient) specialIngredients.push(ingredient);
+          break;
+      }
     }
   }
 
@@ -64,12 +89,14 @@ function extractPrices(data: string) {
         };
       let value: string = nextMatch.value[0];
 
-      let numberMatches = value.matchAll(/\d,\d\d/g);
+      let numberMatch = value.match(/\d,\d\d/g);
+      if (!numberMatch) continue;
       let price = parseFloat(
-        (numberMatches.next().value[0] as string).replace(",", ".")
+        (numberMatch[0] as string).replace(",", ".")
       );
-      let bracketMatches = value.matchAll(/\([\wäöüß]{3,5}\.?\)/g);
-      let type = (bracketMatches.next().value[0] as string)
+      let bracketMatch = value.match(/\([\wäöüß]{3,5}\.?\)/g);
+      if (!bracketMatch) continue;
+      let type = (bracketMatch[0] as string)
         .replace("(", "")
         .replace(")", "");
 
@@ -85,7 +112,7 @@ function extractPrices(data: string) {
           break;
         default:
           console.error(
-            `Couldn't find attribute price ${price} to a category on ${name}`
+            `Couldn't attribute price ${price} to a category`
           );
       }
 
