@@ -2,10 +2,11 @@ import { CDATA, ChildNode } from "domhandler";
 
 const ingredientMap: Map<string, string> = new Map();
 ingredientMap.set("S", "pork");
-ingredientMap.set("V", "veggie");
+ingredientMap.set("V", "vegetarian");
 ingredientMap.set("R", "beef");
 ingredientMap.set("veg", "vegan");
 ingredientMap.set("G", "poultry");
+ingredientMap.set("Gf", "gluten-free");
 //TODO: Add additional icons whenever they are used on the page,
 //      as for some reason unknown even to god almighty, the images
 //      in the list of dishes and the images on the legend on the
@@ -26,18 +27,18 @@ export default function parseFoodNodes({
   let beilage: string = "";
   let wahlbeilage: string = "";
   let prices: {
-    stud: number;
-    // TODO: find out what "bed" means
-    bed: number;
+    students: number;
+    staff: number;
     guests: number;
   } = {
-    stud: 0,
-    bed: 0,
+    students: 0,
+    staff: 0,
     guests: 0,
   };
   let specialIngredients: string[] = [];
   let details: string = "";
 
+  // TODO: Use full name
   name = (relevantNodes[2] as any).data;
 
   for (let i = 0; i < relevantNodes.length; i++) {
@@ -69,9 +70,9 @@ export default function parseFoodNodes({
 
 function extractPrices(data: string) {
   let prices: {
-    stud: number;
+    students: number;
     // TODO: find out what "bed" means
-    bed: number;
+    staff: number;
     guests: number;
   } | null = null;
 
@@ -83,8 +84,8 @@ function extractPrices(data: string) {
     while (!nextMatch.done) {
       if (!prices)
         prices = {
-          stud: 0,
-          bed: 0,
+          students: 0,
+          staff: 0,
           guests: 0,
         };
       let value: string = nextMatch.value[0];
@@ -102,10 +103,10 @@ function extractPrices(data: string) {
 
       switch (type) {
         case "Stud.":
-          prices.stud = price;
+          prices.students = price;
           break;
         case "Bed.":
-          prices.bed = price;
+          prices.staff = price;
           break;
         case "Gäste":
           prices.guests = price;

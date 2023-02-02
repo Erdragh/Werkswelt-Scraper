@@ -3,10 +3,11 @@ import { CDATA, ChildNode } from "domhandler";
 import { DomHandler } from "htmlparser2";
 import parseFoodNodes from "./food-parser";
 
-export default new DomHandler((error, dom) => {
+export default () => new DomHandler((error, dom) => {
   if (error) {
     console.error(error);
   } else {
+    // console.log(dom);
     const speiseplan = selectOne("img.infomax-food-icon", dom)?.parentNode;
     if (!speiseplan) return;
     const date = selectOne("h4", speiseplan.childNodes);
@@ -61,6 +62,6 @@ export default new DomHandler((error, dom) => {
       });
     }
 
-    foodNodes.forEach((food) => console.log(parseFoodNodes(food)));
+    // foodNodes.forEach((food) => console.log(parseFoodNodes(food)));
   }
 });
