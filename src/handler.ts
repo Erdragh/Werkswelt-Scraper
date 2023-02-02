@@ -28,10 +28,12 @@ function handleDay(
       return dish.type !== ElementType.Text;
     })
     .map((dish) => {
+      // title parsing
       const titleText: string = (
         (selectOne("title", dish) as NodeWithChildren)?.children[0] as any
       )?.data;
 
+      // --- name of dish
       const ingredientsRegex = /\(([\d\w]+,?)+\)/g;
       let title = titleText
         .replace(ingredientsRegex, "")
@@ -39,6 +41,7 @@ function handleDay(
         .replace(/ $/g, "");
       title = title.substring(0, 1).toUpperCase() + title.substring(1);
 
+      // --- ingredients of dish
       let foundIngredients: string[] = [];
 
       const specialIngredientsTexts = titleText.matchAll(ingredientsRegex);
@@ -57,9 +60,84 @@ function handleDay(
         } while (!ingredient.done);
       } while (!ingredientsMatch.done);
 
+      // price parsing
+
       return {
         title,
-        ingredients: foundIngredients,
+        ingredients: foundIngredients
+          .map((ingr) => {
+            switch (ingr) {
+              case "1":
+                return "color";
+              case "2":
+                return "caffeine";
+              case "4":
+                return "preservatives";
+              case "5":
+                return "sweeteners";
+              case "7":
+                return "antioxidants";
+              case "8":
+                return "flavour-enhancers";
+              case "9":
+                return "sulphurated";
+              case "10":
+                return "blackened";
+              case "12":
+                return "phosphate";
+              case "13":
+                return "phenylalanine";
+              case "30":
+                return "compound-coating";
+              case "Wz":
+                return "wheat";
+              case "Ro":
+                return "rye";
+              case "Ge":
+                return "barley";
+              case "Hf":
+                return "oats";
+              case "Kr":
+                return "crustaceans";
+              case "Ei":
+                return "egg";
+              case "Fi":
+                return "fish";
+              case "Er":
+                return "peanut";
+              case "So":
+                return "soybeans";
+              case "Mi":
+                return "milk";
+              case "Man":
+                return "almonds";
+              case "Hs":
+                return "hazelnut";
+              case "Pi":
+                return "pistachios";
+              case "Mac":
+                return "macademia-nuts";
+              case "Sel":
+                return "celeriac";
+              case "Sen":
+                return "mustard";
+              case "Ses":
+                return "sesame";
+              case "Su":
+                return "sulphur";
+              case "Lu":
+                return "lupines";
+              case "We":
+                return "mollusca";
+              default:
+                return undefined;
+            }
+          })
+          .filter(
+            (ingr, outerIndex, arr) =>
+              !!ingr &&
+              !arr.find((i, index) => i === ingr && outerIndex !== index)
+          ),
       };
     });
   console.log(date);
