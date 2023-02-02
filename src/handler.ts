@@ -2,6 +2,8 @@ import { selectOne } from "css-select";
 import { DomHandler, ElementType } from "htmlparser2";
 import { ChildNode, NodeWithChildren, ParentNode } from "domhandler";
 
+const ingredientsRegex = /\(([\d\w]+,?)+\)/g;
+
 export default new DomHandler((error, dom) => {
   if (error) {
     console.error(error);
@@ -34,7 +36,6 @@ function handleDay(
       )?.data;
 
       // --- name of dish
-      const ingredientsRegex = /\(([\d\w]+,?)+\)/g;
       let title = titleText
         .replace(ingredientsRegex, "")
         .replace("  ", " ")
@@ -42,23 +43,7 @@ function handleDay(
       title = title.substring(0, 1).toUpperCase() + title.substring(1);
 
       // --- ingredients of dish
-      let foundIngredients: string[] = [];
-
-      const specialIngredientsTexts = titleText.matchAll(ingredientsRegex);
-      let ingredientsMatch;
-      do {
-        ingredientsMatch = specialIngredientsTexts.next();
-        if (!ingredientsMatch.value) continue;
-        const ingredients = (ingredientsMatch.value[0] as string).matchAll(
-          /[\d\w]+/g
-        );
-        let ingredient;
-        do {
-          ingredient = ingredients.next();
-          if (!ingredient.value) continue;
-          foundIngredients.push(ingredient.value[0]);
-        } while (!ingredient.done);
-      } while (!ingredientsMatch.done);
+      const foundIngredients: string[] = extractIngredients(titleText);
 
       // price parsing
       const prices = {
@@ -73,85 +58,135 @@ function handleDay(
         ),
       };
 
+      // optional side dishes
+      const sideDishText = (
+        (selectOne("beilagen", dish) as NodeWithChildren)?.children[0] as any
+      )?.data;
+      let sideDishes: string | null = null;
+      let sideDishIngredinets: string[] = [];
+      if (sideDishText) {
+        sideDishIngredinets = extractIngredients(sideDishText);
+        sideDishes = sideDishText
+          .replace(ingredientsRegex, "")
+          .replace("  ", " ")
+          .replace(/ $/g, "");
+        if (sideDishes) {
+          sideDishes =
+            sideDishes.substring(0, 1).toUpperCase() + sideDishes.substring(1);
+        }
+      }
+
+      const sideDishesObj = {
+        sideDishes: sideDishes,
+        ingredients: beautifyIngredients(sideDishIngredinets),
+      };
+
       return {
         title,
-        ingredients: foundIngredients
-          .map((ingr) => {
-            switch (ingr) {
-              case "1":
-                return "color";
-              case "2":
-                return "caffeine";
-              case "4":
-                return "preservatives";
-              case "5":
-                return "sweeteners";
-              case "7":
-                return "antioxidants";
-              case "8":
-                return "flavour-enhancers";
-              case "9":
-                return "sulphurated";
-              case "10":
-                return "blackened";
-              case "12":
-                return "phosphate";
-              case "13":
-                return "phenylalanine";
-              case "30":
-                return "compound-coating";
-              case "Wz":
-                return "wheat";
-              case "Ro":
-                return "rye";
-              case "Ge":
-                return "barley";
-              case "Hf":
-                return "oats";
-              case "Kr":
-                return "crustaceans";
-              case "Ei":
-                return "egg";
-              case "Fi":
-                return "fish";
-              case "Er":
-                return "peanut";
-              case "So":
-                return "soybeans";
-              case "Mi":
-                return "milk";
-              case "Man":
-                return "almonds";
-              case "Hs":
-                return "hazelnut";
-              case "Pi":
-                return "pistachios";
-              case "Mac":
-                return "macademia-nuts";
-              case "Sel":
-                return "celeriac";
-              case "Sen":
-                return "mustard";
-              case "Ses":
-                return "sesame";
-              case "Su":
-                return "sulphur";
-              case "Lu":
-                return "lupines";
-              case "We":
-                return "mollusca";
-              default:
-                return undefined;
-            }
-          })
-          .filter(
-            (ingr, outerIndex, arr) =>
-              !!ingr &&
-              !arr.find((i, index) => i === ingr && outerIndex !== index)
-          ),
+        ingredients: beautifyIngredients(foundIngredients),
         prices,
+        sideDishes: sideDishes ? sideDishesObj : null,
       };
     });
   console.log(date);
   dishes.forEach((d) => console.log(d));
+}
+
+function extractIngredients(text: string) {
+  // --- ingredients of dish
+  let foundIngredients: string[] = [];
+
+  const specialIngredientsTexts = text.matchAll(ingredientsRegex);
+  let ingredientsMatch;
+  do {
+    ingredientsMatch = specialIngredientsTexts.next();
+    if (!ingredientsMatch.value) continue;
+    const ingredients = (ingredientsMatch.value[0] as string).matchAll(
+      /[\d\w]+/g
+    );
+    let ingredient;
+    do {
+      ingredient = ingredients.next();
+      if (!ingredient.value) continue;
+      foundIngredients.push(ingredient.value[0]);
+    } while (!ingredient.done);
+  } while (!ingredientsMatch.done);
+
+  return foundIngredients;
+}
+
+function beautifyIngredients(ingredients: string[]) {
+  return ingredients
+    .map((ingr) => {
+      switch (ingr) {
+        case "1":
+          return "color";
+        case "2":
+          return "caffeine";
+        case "4":
+          return "preservatives";
+        case "5":
+          return "sweeteners";
+        case "7":
+          return "antioxidants";
+        case "8":
+          return "flavour-enhancers";
+        case "9":
+          return "sulphurated";
+        case "10":
+          return "blackened";
+        case "12":
+          return "phosphate";
+        case "13":
+          return "phenylalanine";
+        case "30":
+          return "compound-coating";
+        case "Wz":
+          return "wheat";
+        case "Ro":
+          return "rye";
+        case "Ge":
+          return "barley";
+        case "Hf":
+          return "oats";
+        case "Kr":
+          return "crustaceans";
+        case "Ei":
+          return "egg";
+        case "Fi":
+          return "fish";
+        case "Er":
+          return "peanut";
+        case "So":
+          return "soybeans";
+        case "Mi":
+          return "milk";
+        case "Man":
+          return "almonds";
+        case "Hs":
+          return "hazelnut";
+        case "Pi":
+          return "pistachios";
+        case "Mac":
+          return "macademia-nuts";
+        case "Sel":
+          return "celeriac";
+        case "Sen":
+          return "mustard";
+        case "Ses":
+          return "sesame";
+        case "Su":
+          return "sulphur";
+        case "Lu":
+          return "lupines";
+        case "We":
+          return "mollusca";
+        default:
+          return undefined;
+      }
+    })
+    .filter(
+      (ingr, outerIndex, arr) =>
+        !!ingr && !arr.find((i, index) => i === ingr && outerIndex !== index)
+    );
 }
