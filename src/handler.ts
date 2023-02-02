@@ -61,6 +61,17 @@ function handleDay(
       } while (!ingredientsMatch.done);
 
       // price parsing
+      const prices = {
+        student: Number.parseFloat(
+          (selectOne("preis1", dish)?.children[0] as any).data.replace(",", ".")
+        ),
+        staff: Number.parseFloat(
+          (selectOne("preis2", dish)?.children[0] as any).data.replace(",", ".")
+        ),
+        guest: Number.parseFloat(
+          (selectOne("preis3", dish)?.children[0] as any).data.replace(",", ".")
+        ),
+      };
 
       return {
         title,
@@ -138,6 +149,7 @@ function handleDay(
               !!ingr &&
               !arr.find((i, index) => i === ingr && outerIndex !== index)
           ),
+        prices,
       };
     });
   console.log(date);
