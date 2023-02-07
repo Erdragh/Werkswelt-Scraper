@@ -15,15 +15,21 @@ export default new DomHandler((error, dom) => {
   const days = speiseplan.children.filter((c) => c.type === ElementType.Tag);
 
   for (let day of days) {
-    handleDay(day as any);
+    const dishes = parseDay(day as any);
+    dishes.forEach((d) => console.log(d));
   }
 });
 
-function handleDay(
+function parseDay(
   day: ParentNode & ChildNode & { attribs: { timestamp: string } }
 ) {
   const timestamp = Number.parseInt(day.attribs.timestamp);
-  const date = new Date(timestamp * 1000 + 24 * 60 * 60 * 1000);
+  // the timestamps in xml are in seconds, the java date wants
+  // milliseconds. The timestamps are also somewhy always one hour late.
+  // What this means: the timestamp for the food of the 10th of a month
+  // has a timestamp for 23:00 on the 9th of that month. So I add 1 hour
+  // to the timestamp to get a perfect date at 00:00:00.
+  const date = new Date(timestamp * 1000 + 1 * 60 * 60 * 1000);
 
   const dishes = (day.children as NodeWithChildren[])
     .filter((dish) => {
@@ -59,37 +65,45 @@ function handleDay(
       };
 
       // optional side dishes
-      const sideDishText = (
+      const sideDishText: string = (
         (selectOne("beilagen", dish) as NodeWithChildren)?.children[0] as any
       )?.data;
-      let sideDishes: string | null = null;
-      let sideDishIngredinets: string[] = [];
+      let sideDishes: { title: string; ingredients: string[] }[] = [];
       if (sideDishText) {
-        sideDishIngredinets = extractIngredients(sideDishText);
         sideDishes = sideDishText
-          .replace(ingredientsRegex, "")
-          .replace("  ", " ")
-          .replace(/ $/g, "");
+          .replace("Wahlbeilagen: ", "")
+          .split(", ")
+          .map((sd) => {
+            return {
+              title: sd,
+              ingredients: [],
+            };
+          });
         if (sideDishes) {
-          sideDishes =
-            sideDishes.substring(0, 1).toUpperCase() + sideDishes.substring(1);
+          sideDishes = sideDishes.map((sd) => {
+            sd.ingredients = beautifyIngredients(
+              extractIngredients(sideDishText)
+            );
+            sd.title = sd.title
+              .replace(ingredientsRegex, "")
+              .replace("  ", " ")
+              .replace(/ $/g, "");
+            return sd;
+          });
         }
       }
 
-      const sideDishesObj = {
-        sideDishes: sideDishes,
-        ingredients: beautifyIngredients(sideDishIngredinets),
-      };
+      // nutrition values
 
       return {
         title,
+        date,
         ingredients: beautifyIngredients(foundIngredients),
         prices,
-        sideDishes: sideDishes ? sideDishesObj : null,
+        sideDishes,
       };
     });
-  console.log(date);
-  dishes.forEach((d) => console.log(d));
+  return dishes;
 }
 
 function extractIngredients(text: string) {
@@ -115,8 +129,8 @@ function extractIngredients(text: string) {
   return foundIngredients;
 }
 
-function beautifyIngredients(ingredients: string[]) {
-  return ingredients
+function beautifyIngredients(ingredients: string[]): string[] {
+  const i: string[] = ingredients
     .map((ingr) => {
       switch (ingr) {
         case "1":
@@ -188,5 +202,6 @@ function beautifyIngredients(ingredients: string[]) {
     .filter(
       (ingr, outerIndex, arr) =>
         !!ingr && !arr.find((i, index) => i === ingr && outerIndex !== index)
-    );
+    ) as any;
+    return i;
 }
