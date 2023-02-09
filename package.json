@@ -4,7 +4,7 @@
   "description": "web scraper fetching food data for the FAU",
   "main": "main.ts",
   "scripts": {
-    "dev": "nodemon src/index.ts",
+    "dev": "nodemon src/index.ts https://www.max-manager.de/daten-extern/sw-erlangen-nuernberg/xml/mensa-sued.xml",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
