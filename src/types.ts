@@ -68,7 +68,7 @@ export enum Disclaimer {
   CO2_FOOTPRINT = "co2-footprint",
   PORK = "pork",
   VEGETARIAN = "vegetarian",
-  POULTRY = "poultRy",
+  POULTRY = "poultry",
   SUSTAINABLE_FISH = "sustainable-fish",
   FISH = "fish",
   GLUTEN_FREE = "gluten-free",
