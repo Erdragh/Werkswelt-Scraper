@@ -44,8 +44,10 @@ function parseDay(
       // --- name of dish
       let title = titleText
         .replace(ingredientsRegex, "")
-        .replace("  ", " ")
-        .replace(/ $/g, "");
+        .replace(/ +/g, " ")
+        .replace(/^ /g, "")
+        .replace(/ $/g, "")
+        .replace(/\r\n */g, "");
       title = title.substring(0, 1).toUpperCase() + title.substring(1);
 
       // --- ingredients of dish
@@ -69,12 +71,12 @@ function parseDay(
           .split(", ")
           .map((sd) => {
             return {
-              title: sd,
+              title: sd.replace(/\r\n */g, ""),
               ingredients: [],
             };
           })
           .filter((sd) => {
-            return !sd.title.match(/\r\n */g);
+            return !!sd.title && sd.title !== " ";
           });
         if (sideDishes) {
           sideDishes = sideDishes.map((sd) => {
@@ -83,8 +85,10 @@ function parseDay(
             );
             sd.title = sd.title
               .replace(ingredientsRegex, "")
-              .replace("  ", " ")
-              .replace(/ $/g, "");
+              .replace(/ +/g, " ")
+              .replace(/ $/g, "")
+              .replace(/^ /g, "")
+              .replace(/^mit /g, "");
             return sd;
           });
         }
@@ -230,6 +234,7 @@ function beautifyIngredients(ingredients: string[]): string[] {
 }
 
 function beautifyDisclaimers(disclaimers: string[]): (string | undefined)[] {
+  console.log(disclaimers);
   return disclaimers
     .map((d) => {
       switch (d) {
@@ -241,12 +246,14 @@ function beautifyDisclaimers(disclaimers: string[]): (string | undefined)[] {
           return "pork";
         case "V":
           return "vegetarian";
+        case "G":
+          return "poultry"
         default:
           return undefined;
       }
     })
-    .filter((d, _, arr) => {
-      return !!d && !arr.find((a) => d === a);
+    .filter((d, i, arr) => {
+      return !!d && !arr.find((a, j) => d === a && i !== j);
     });
 }
 
