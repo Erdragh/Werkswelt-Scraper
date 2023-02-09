@@ -53,15 +53,9 @@ function parseDay(
 
       // price parsing
       const prices = {
-        student: Number.parseFloat(
-          (selectOne("preis1", dish)?.children[0] as any).data.replace(",", ".")
-        ),
-        staff: Number.parseFloat(
-          (selectOne("preis2", dish)?.children[0] as any).data.replace(",", ".")
-        ),
-        guest: Number.parseFloat(
-          (selectOne("preis3", dish)?.children[0] as any).data.replace(",", ".")
-        ),
+        student: getNumberFromElement("preis1", dish),
+        staff: getNumberFromElement("preis2", dish),
+        guest: getNumberFromElement("preis3", dish),
       };
 
       // optional side dishes
@@ -94,11 +88,23 @@ function parseDay(
       }
 
       // nutrition values
+      const nutrition = {
+        kilojoules: getNumberFromElement("kj", dish),
+        kilocalories: getNumberFromElement("kcal", dish),
+        fat: getNumberFromElement("fett", dish),
+        saturated_fatty_acids: getNumberFromElement("gesfett", dish),
+        carbohydrates: getNumberFromElement("kh", dish),
+        sugar: getNumberFromElement("zucker", dish),
+        fiber: getNumberFromElement("ballaststoffe", dish),
+        protein: getNumberFromElement("eiweiss", dish),
+        salt: getNumberFromElement("salz", dish)
+      };
 
       return {
         title,
         date,
         ingredients: beautifyIngredients(foundIngredients),
+        nutrition,
         prices,
         sideDishes,
       };
@@ -203,5 +209,14 @@ function beautifyIngredients(ingredients: string[]): string[] {
       (ingr, outerIndex, arr) =>
         !!ingr && !arr.find((i, index) => i === ingr && outerIndex !== index)
     ) as any;
-    return i;
+  return i;
+}
+
+function getNumberFromElement(
+  elementName: string,
+  dish: NodeWithChildren
+): number {
+  return Number.parseFloat(
+    (selectOne(elementName, dish)?.children[0] as any).data.replace(",", ".")
+  );
 }
