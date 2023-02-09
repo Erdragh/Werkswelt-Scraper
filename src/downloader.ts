@@ -1,8 +1,16 @@
+import { readFile, readFileSync } from "fs";
 import { ClientRequest } from "http";
 import { get, request } from "https";
 
 export default function download(): Promise<string> {
   return new Promise((resolve, reject) => {
+    readFile("mensa-sued.xml", {
+      encoding: "utf-8"
+    } ,(err, data) => {
+      if (err) reject(err)
+      else resolve(data);
+    })
+    return;
     let content: string;
     const req = request(
       {

@@ -24,7 +24,7 @@ function parseDay(
   day: ParentNode & ChildNode & { attribs: { timestamp: string } }
 ) {
   const timestamp = Number.parseInt(day.attribs.timestamp);
-  // the timestamps in xml are in seconds, the java date wants
+  // the timestamps in xml are in seconds, the javascript date wants
   // milliseconds. The timestamps are also somewhy always one hour late.
   // What this means: the timestamp for the food of the 10th of a month
   // has a timestamp for 23:00 on the 9th of that month. So I add 1 hour
@@ -72,6 +72,9 @@ function parseDay(
               title: sd,
               ingredients: [],
             };
+          })
+          .filter((sd) => {
+            return !sd.title.match(/\r\n */g);
           });
         if (sideDishes) {
           sideDishes = sideDishes.map((sd) => {
@@ -97,13 +100,27 @@ function parseDay(
         sugar: getNumberFromElement("zucker", dish),
         fiber: getNumberFromElement("ballaststoffe", dish),
         protein: getNumberFromElement("eiweiss", dish),
-        salt: getNumberFromElement("salz", dish)
+        salt: getNumberFromElement("salz", dish),
       };
+
+      // disclaimers
+      const imageContainer: string = (
+        selectOne("piktogramme", dish)?.children[0] as any
+      ).data;
+      const matches = imageContainer.matchAll(/infomax-food-icon \w{1,3}/g);
+      let match = matches.next();
+      let disclaimers: string[] = [];
+      while (!match.done) {
+        disclaimers.push(match.value[0].replace("infomax-food-icon ", ""));
+        match = matches.next();
+      }
 
       return {
         title,
         date,
         ingredients: beautifyIngredients(foundIngredients),
+        disclaimers: beautifyDisclaimers(disclaimers),
+        // disclaimers,
         nutrition,
         prices,
         sideDishes,
@@ -210,6 +227,27 @@ function beautifyIngredients(ingredients: string[]): string[] {
         !!ingr && !arr.find((i, index) => i === ingr && outerIndex !== index)
     ) as any;
   return i;
+}
+
+function beautifyDisclaimers(disclaimers: string[]): (string | undefined)[] {
+  return disclaimers
+    .map((d) => {
+      switch (d) {
+        case "veg":
+          return "vegan";
+        case "CO2":
+          return "co2-footprint";
+        case "S":
+          return "pork";
+        case "V":
+          return "vegetarian";
+        default:
+          return undefined;
+      }
+    })
+    .filter((d, _, arr) => {
+      return !!d && !arr.find((a) => d === a);
+    });
 }
 
 function getNumberFromElement(
