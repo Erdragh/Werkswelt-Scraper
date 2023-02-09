@@ -1,7 +1,13 @@
 import { selectOne } from "css-select";
 import { DomHandler, ElementType } from "htmlparser2";
 import { ChildNode, NodeWithChildren, ParentNode } from "domhandler";
-import { Disclaimer, Ingredient, MainDish, NutritionValues, SideDish } from "./types";
+import {
+  Disclaimer,
+  Ingredient,
+  MainDish,
+  NutritionValues,
+  SideDish,
+} from "./types";
 
 const ingredientsRegex = /\(([\d\w]+,?)+\)/g;
 
@@ -43,12 +49,7 @@ function parseDay(
       )?.data;
 
       // --- name of dish
-      let title = titleText
-        .replace(ingredientsRegex, "")
-        .replace(/ +/g, " ")
-        .replace(/^ /g, "")
-        .replace(/ $/g, "")
-        .replace(/\r\n */g, "");
+      let title = cleanupTitle(titleText);
       title = title.substring(0, 1).toUpperCase() + title.substring(1);
 
       // --- ingredients of dish
@@ -84,12 +85,7 @@ function parseDay(
             sd.ingredients = beautifyIngredients(
               extractIngredients(sideDishText)
             );
-            sd.title = sd.title
-              .replace(ingredientsRegex, "")
-              .replace(/ +/g, " ")
-              .replace(/ $/g, "")
-              .replace(/^ /g, "")
-              .replace(/^mit /g, "");
+            sd.title = cleanupTitle(sd.title)
             return sd;
           });
         }
@@ -326,4 +322,13 @@ function getNumberFromElement(
   return Number.parseFloat(
     (selectOne(elementName, dish)?.children[0] as any).data.replace(",", ".")
   );
+}
+
+function cleanupTitle(title: string): string {
+  return title
+    .replace(ingredientsRegex, "")
+    .replace(/ +/g, " ")
+    .replace(/ $/g, "")
+    .replace(/^ /g, "")
+    .replace(/^mit /g, "");
 }
