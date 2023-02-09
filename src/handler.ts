@@ -234,7 +234,6 @@ function beautifyIngredients(ingredients: string[]): string[] {
 }
 
 function beautifyDisclaimers(disclaimers: string[]): (string | undefined)[] {
-  console.log(disclaimers);
   return disclaimers
     .map((d) => {
       switch (d) {
@@ -247,7 +246,21 @@ function beautifyDisclaimers(disclaimers: string[]): (string | undefined)[] {
         case "V":
           return "vegetarian";
         case "G":
-          return "poultry"
+          return "poultry";
+        case "MSC":
+          return "sustainable-fish";
+        case "F":
+          return "fish";
+        case "Gf":
+          return "gluten-free";
+        case "R":
+          return "beef";
+        case "MV":
+          return "mensa-vital";
+        case "W":
+          return "venison";
+        case "L":
+          return "lamb";
         default:
           return undefined;
       }
