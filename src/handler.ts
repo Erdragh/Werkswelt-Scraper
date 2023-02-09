@@ -1,6 +1,7 @@
 import { selectOne } from "css-select";
 import { DomHandler, ElementType } from "htmlparser2";
 import { ChildNode, NodeWithChildren, ParentNode } from "domhandler";
+import { Disclaimer, Ingredient, MainDish, NutritionValues, SideDish } from "./types";
 
 const ingredientsRegex = /\(([\d\w]+,?)+\)/g;
 
@@ -22,7 +23,7 @@ export default new DomHandler((error, dom) => {
 
 function parseDay(
   day: ParentNode & ChildNode & { attribs: { timestamp: string } }
-) {
+): MainDish[] {
   const timestamp = Number.parseInt(day.attribs.timestamp);
   // the timestamps in xml are in seconds, the javascript date wants
   // milliseconds. The timestamps are also somewhy always one hour late.
@@ -31,7 +32,7 @@ function parseDay(
   // to the timestamp to get a perfect date at 00:00:00.
   const date = new Date(timestamp * 1000 + 1 * 60 * 60 * 1000);
 
-  const dishes = (day.children as NodeWithChildren[])
+  const dishes: MainDish[] = (day.children as NodeWithChildren[])
     .filter((dish) => {
       return dish.type !== ElementType.Text;
     })
@@ -64,7 +65,7 @@ function parseDay(
       const sideDishText: string = (
         (selectOne("beilagen", dish) as NodeWithChildren)?.children[0] as any
       )?.data;
-      let sideDishes: { title: string; ingredients: string[] }[] = [];
+      let sideDishes: SideDish[] = [];
       if (sideDishText) {
         sideDishes = sideDishText
           .replace("Wahlbeilagen: ", "")
@@ -95,7 +96,7 @@ function parseDay(
       }
 
       // nutrition values
-      const nutrition = {
+      const nutrition: NutritionValues = {
         kilojoules: getNumberFromElement("kj", dish),
         kilocalories: getNumberFromElement("kcal", dish),
         fat: getNumberFromElement("fett", dish),
@@ -119,7 +120,7 @@ function parseDay(
         match = matches.next();
       }
 
-      return {
+      const mainDish: MainDish = {
         title,
         date,
         ingredients: beautifyIngredients(foundIngredients),
@@ -129,11 +130,12 @@ function parseDay(
         prices,
         sideDishes,
       };
+      return mainDish;
     });
   return dishes;
 }
 
-function extractIngredients(text: string) {
+function extractIngredients(text: string): string[] {
   // --- ingredients of dish
   let foundIngredients: string[] = [];
 
@@ -156,72 +158,105 @@ function extractIngredients(text: string) {
   return foundIngredients;
 }
 
-function beautifyIngredients(ingredients: string[]): string[] {
-  const i: string[] = ingredients
+function beautifyIngredients(ingredients: string[]): Ingredient[] {
+  const {
+    COLOR,
+    CAFFEINE,
+    PRESERVATIVES,
+    SWEETENERS,
+    ANTIOXIDANTS,
+    FLAVOUR_ENHANCERS,
+    SULPHURATED,
+    BLACKENED,
+    PHOSPHATE,
+    PHENYLALANINE,
+    COMPOUND_COATING,
+    WHEAT,
+    RYE,
+    BARLEY,
+    OATS,
+    CRUSTACEANS,
+    EGG,
+    FISH,
+    PEANUT,
+    SOYBEANS,
+    MILK,
+    ALMONDS,
+    HAZELNUT,
+    PISTACHIOS,
+    MACADEMIA_NUTS,
+    CELERIAC,
+    MUSTARD,
+    SESAME,
+    SULPHUR,
+    LUPINES,
+    MOLLUSCA,
+  } = Ingredient;
+  const i: Ingredient[] = ingredients
     .map((ingr) => {
       switch (ingr) {
         case "1":
-          return "color";
+          return COLOR;
         case "2":
-          return "caffeine";
+          return CAFFEINE;
         case "4":
-          return "preservatives";
+          return PRESERVATIVES;
         case "5":
-          return "sweeteners";
+          return SWEETENERS;
         case "7":
-          return "antioxidants";
+          return ANTIOXIDANTS;
         case "8":
-          return "flavour-enhancers";
+          return FLAVOUR_ENHANCERS;
         case "9":
-          return "sulphurated";
+          return SULPHURATED;
         case "10":
-          return "blackened";
+          return BLACKENED;
         case "12":
-          return "phosphate";
+          return PHOSPHATE;
         case "13":
-          return "phenylalanine";
+          return PHENYLALANINE;
         case "30":
-          return "compound-coating";
+          return COMPOUND_COATING;
         case "Wz":
-          return "wheat";
+          return WHEAT;
         case "Ro":
-          return "rye";
+          return RYE;
         case "Ge":
-          return "barley";
+          return BARLEY;
         case "Hf":
-          return "oats";
+          return OATS;
         case "Kr":
-          return "crustaceans";
+          return CRUSTACEANS;
         case "Ei":
-          return "egg";
+          return EGG;
         case "Fi":
-          return "fish";
+          return FISH;
         case "Er":
-          return "peanut";
+          return PEANUT;
         case "So":
-          return "soybeans";
+          return SOYBEANS;
         case "Mi":
-          return "milk";
+          return MILK;
         case "Man":
-          return "almonds";
+          return ALMONDS;
         case "Hs":
-          return "hazelnut";
+          return HAZELNUT;
         case "Pi":
-          return "pistachios";
+          return PISTACHIOS;
         case "Mac":
-          return "macademia-nuts";
+          return MACADEMIA_NUTS;
         case "Sel":
-          return "celeriac";
+          return CELERIAC;
         case "Sen":
-          return "mustard";
+          return MUSTARD;
         case "Ses":
-          return "sesame";
+          return SESAME;
         case "Su":
-          return "sulphur";
+          return SULPHUR;
         case "Lu":
-          return "lupines";
+          return LUPINES;
         case "We":
-          return "mollusca";
+          return MOLLUSCA;
         default:
           return undefined;
       }
@@ -233,41 +268,55 @@ function beautifyIngredients(ingredients: string[]): string[] {
   return i;
 }
 
-function beautifyDisclaimers(disclaimers: string[]): (string | undefined)[] {
+function beautifyDisclaimers(disclaimers: string[]): Disclaimer[] {
+  const {
+    VEGAN,
+    CO2_FOOTPRINT,
+    PORK,
+    VEGETARIAN,
+    POULTRY,
+    SUSTAINABLE_FISH,
+    FISH,
+    GLUTEN_FREE,
+    BEEF,
+    MENSA_VITAL,
+    VENISON,
+    LAMB,
+  } = Disclaimer;
   return disclaimers
     .map((d) => {
       switch (d) {
         case "veg":
-          return "vegan";
+          return VEGAN;
         case "CO2":
-          return "co2-footprint";
+          return CO2_FOOTPRINT;
         case "S":
-          return "pork";
+          return PORK;
         case "V":
-          return "vegetarian";
+          return VEGETARIAN;
         case "G":
-          return "poultry";
+          return POULTRY;
         case "MSC":
-          return "sustainable-fish";
+          return SUSTAINABLE_FISH;
         case "F":
-          return "fish";
+          return FISH;
         case "Gf":
-          return "gluten-free";
+          return GLUTEN_FREE;
         case "R":
-          return "beef";
+          return BEEF;
         case "MV":
-          return "mensa-vital";
+          return MENSA_VITAL;
         case "W":
-          return "venison";
+          return VENISON;
         case "L":
-          return "lamb";
+          return LAMB;
         default:
           return undefined;
       }
     })
     .filter((d, i, arr) => {
       return !!d && !arr.find((a, j) => d === a && i !== j);
-    });
+    }) as any;
 }
 
 function getNumberFromElement(
